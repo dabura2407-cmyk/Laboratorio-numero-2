@@ -1,0 +1,112 @@
+Laboratorio Virtual de Electrónica — Protoboard Simple
+Programa en C que simula, por consola, el armado de un circuito básico
+(batería de 9 V, resistencias y un LED) para que alumnos de escuela
+puedan practicar electrónica sin componentes físicos. Incluye un
+asistente simple basado en reglas que recomienda la resistencia
+correcta usando búsqueda binaria (lower_bound).
+Compilar y ejecutar
+Bash
+Modelo eléctrico
+Batería fija de 9 V.
+Hasta 5 resistencias en serie (se suman).
+Un LED de un solo color (rojo, verde, amarillo o azul), cada uno con
+su propio voltaje directo (Vf).
+Ley de Ohm: I = (V_batería − Vf) / R_total.
+Rango de corriente seguro: 5 mA a 20 mA.
+Explicación de cada función
+Funciones auxiliares de entrada
+void limpiarBuffer()
+Vacía el buffer de stdin leyendo carácter por carácter hasta encontrar
+un salto de línea o EOF. Se usa después de leer con scanf para que el
+\n pendiente no interfiera con la siguiente lectura.
+int leerDouble(double *valor)
+Lee una línea completa con fgets, reemplaza comas por puntos (para
+aceptar 220,5 además de 220.5) y convierte el texto a double con
+sscanf. Devuelve 1 si logró leer un número válido, 0 si falló.
+int leerString(char *dest, int tam)
+Lee una línea con fgets, quita el salto de línea final y copia el
+resultado a dest con strncpy, respetando el tamaño máximo tam
+para evitar desbordamientos de buffer. Devuelve 1 si tuvo éxito.
+void aMinusculas(char *s)
+Convierte una cadena a minúsculas letra por letra con tolower, para
+poder comparar colores sin importar cómo los escribió el usuario
+(ROJO, Rojo, rojo).
+Asistente IA (recomendación de resistencia)
+void ordenarInsercion(double arr[], int n)
+Ordena un arreglo de double de menor a mayor usando insertion sort.
+Trabaja directamente sobre el arreglo recibido (in-place), sin reservar
+memoria adicional. Se usa una sola vez, al iniciar el programa, para
+ordenar la lista de valores comerciales de resistencias.
+int lowerBound(double arr[], int n, double valor)
+Búsqueda binaria clásica (equivalente a std::lower_bound de C++):
+sobre un arreglo ya ordenado, devuelve el índice del primer elemento
+que es mayor o igual a valor. Si ninguno lo es, devuelve n. Es la
+base del asistente: encuentra rápidamente la resistencia comercial más
+pequeña que sigue siendo segura para el LED.
+void asistenteSugerirResistencia(Circuito *c)
+El "asistente IA": calcula la resistencia mínima necesaria para que la
+corriente del LED no supere el máximo seguro (usando la Ley de Ohm), y
+llama a lowerBound sobre la lista ordenada de valores comerciales
+para sugerir el valor exacto que el alumno debería usar. Se llama
+automáticamente al agregar un LED y también está disponible como
+opción de menú.
+Funciones del circuito
+double voltajeSegunColor(const char *color)
+Actúa como tabla de consulta: recibe un color en minúsculas y devuelve
+su voltaje directo (Vf): rojo = 1.8 V, verde = 2.1 V, amarillo = 2.0 V,
+azul = 3.0 V. Devuelve -1 si el color no es reconocido.
+double calcularCorriente(Circuito *c)
+Suma todas las resistencias del circuito y aplica la Ley de Ohm.
+Devuelve -1 si no hay resistencia (corto circuito), 0 si el
+voltaje del LED es mayor o igual al de la batería, o la corriente
+calculada en amperes en cualquier otro caso.
+void mostrarCircuito(Circuito *c)
+Función de solo lectura: imprime el estado actual del circuito
+(batería, resistencias conectadas y LED, si existe). No modifica nada.
+void mostrarMenu()
+Imprime las 9 opciones del menú principal. No recibe parámetros ni
+devuelve nada — solo texto.
+void mostrarComponentes()
+Describe los componentes disponibles para el alumno: batería de 9 V,
+resistencias de cualquier valor, y los 4 colores de LED aceptados.
+void agregarResistencia(Circuito *c)
+Verifica que no se haya llegado al máximo de 5 resistencias, pide un
+valor por teclado (usando leerDouble), valida que sea positivo, y lo
+agrega al arreglo del circuito.
+void agregarLed(Circuito *c)
+Verifica que no haya ya un LED conectado, pide el color, lo normaliza a
+minúsculas, valida que sea uno de los 4 aceptados y lo guarda en el
+circuito. Al terminar, llama automáticamente al asistente IA para
+sugerir la resistencia adecuada.
+void eliminarResistencia(Circuito *c)
+Muestra la lista de resistencias actuales numeradas, pide al alumno
+cuál quiere eliminar, valida el número, y desplaza los elementos
+siguientes una posición hacia la izquierda para "borrar" la elegida.
+void conectarCircuito(Circuito *c)
+La función principal de simulación: valida que haya un LED, suma las
+resistencias, calcula el voltaje disponible y la corriente, y clasifica
+el resultado en tres categorías: LED quemado (corriente > 20 mA), LED
+casi no enciende (corriente < 5 mA), o LED enciende correctamente.
+void reiniciarCircuito(Circuito *c)
+Vacía el circuito: pone el contador de resistencias en 0, quita el LED
+y reinicia sus valores, dejando la protoboard lista para empezar de
+nuevo.
+int main()
+Punto de entrada del programa. Ordena la lista de resistencias
+comerciales (ordenarInsercion), inicializa el circuito, y entra en un
+bucle que muestra el menú, lee la opción elegida y llama a la función
+correspondiente mediante un switch. Maneja el cierre de stdin
+(EOF) para terminar el programa de forma segura en vez de quedar en un
+bucle infinito.
+Notas técnicas
+Sin memoria dinámica: el programa no usa malloc, calloc,
+realloc ni free en ningún punto. Todas las estructuras (el
+circuito y la lista de resistencias comerciales) son arreglos de
+tamaño fijo en el stack.
+Manejo de EOF: el bucle principal detecta cuando stdin se
+cierra y termina el programa en vez de repetir el menú
+indefinidamente.
+El modelo eléctrico es intencionalmente simplificado con fines
+didácticos: no representa temperatura, curva I-V real del LED,
+resistencia interna de la batería, ni conexiones físicas de una
+protoboard real.
